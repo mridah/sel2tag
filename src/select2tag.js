@@ -16,6 +16,8 @@ jQuery.fn.extend({
                            maxSelection: null,
                            maxSelectionError: max_selected_error,
                            maxSelectionErrorArgs: [],
+                           onItemSelection: null,
+                           onItemRemoval: null,
                            readOnly: false,
                            theme: 'default',
                            class: {
@@ -65,6 +67,8 @@ function select2tag_init(select_box, params) {
     var maxSelection = params.maxSelection,
         maxSelectionError = params.maxSelectionError,
         maxSelectionErrorArgs = params.maxSelectionErrorArgs,
+        onItemSelection = params.onItemSelection,
+        onItemRemoval = params.onItemRemoval,
         theme = params.theme,
         tagManagerClass = params.class.tagManager === undefined ? '' : params.class.tagManager,
         tagManagerItemsClass = params.class.tagManagerItems === undefined ? '' : params.class.tagManagerItems,
@@ -72,15 +76,19 @@ function select2tag_init(select_box, params) {
         tagManagerAutocompleteListClass = params.class.tagManagerAutocompleteList === undefined ? '' : params.class.tagManagerAutocompleteList;
 
 
-    var select_data_2d = {}, select_data_1d = [], previously_selected_items = [];
+    var select_option_val_map = {}, select_data_1d = [], previously_selected_items = [], currently_selected_vals = [], tmp_counter = 0;
 
 
     $(select_box).find('option').each(function() {
-        select_data_2d[$(this).text()] = $(this).val();
+        select_option_val_map[$(this).text() + '#' + tmp_counter++] = $(this).val();
         select_data_1d.push($(this).text());
         if($(this)[0].hasAttribute('selected'))
+        {
             previously_selected_items.push($(this).text());
+            currently_selected_vals.push($(this).val());
+        }
     });
+    select_box.val(currently_selected_vals);
 
     var dataList = select_data_1d;   
 
@@ -142,10 +150,11 @@ function select2tag_init(select_box, params) {
 
     select_box.css('display', 'none');
 
+    tmp_counter = 0;
 
     /* selecting previously selected items */
     previously_selected_items.forEach(function(item) {
-        var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "'><a>" + item + "</a></li>");
+        var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "' myval='" + currently_selected_vals[tmp_counter++] + "'><a>" + item + "</a></li>");
         tag_manager_input.parent().before(tab);
         var del_button = $("<span class='delete-button tags-del'></span>");
         del_button.click(function(){
@@ -211,6 +220,8 @@ function select2tag_init(select_box, params) {
 
                 p.html(first_part + '<span style="color: #4682B4; font-weight: bold;">' + val + '</span>' + second_part);
                 p.attr('data', e[0]);
+                p.attr('ai', e[1]);
+                p.attr('_val', select_option_val_map[ e[0] + '#' + e[1] ]);
             }
 
             p.click(function() {
@@ -219,6 +230,7 @@ function select2tag_init(select_box, params) {
                 var itemFound = false;
                 var input_val = p.text().toLowerCase();
                 var li_count = res.prev().find('li').length;
+                var onItemSelectionArgs = [];
 
                 if(li_count-1 === maxSelection)
                 {
@@ -240,7 +252,8 @@ function select2tag_init(select_box, params) {
 
                 if ( !itemFound )
                 {
-                    var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "'><a>" + p.attr('data') + "</a></li>");
+                    var value = p.attr('data');
+                    var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "' myval='" + p.attr('_val') + "'><a>" + p.attr('data') + "</a></li>");
 
                     tag_manager_input.parent().before(tab);
                     var del_button = $("<span class='delete-button tags-del'></span>");
@@ -248,15 +261,23 @@ function select2tag_init(select_box, params) {
                         remove_item($(this));
                     });
                     tab.append(del_button);
-                 //   selected_value = select_data_2d[input_val];
 
-                         //$('#' + input.attr('id')).prop('selectedIndex', item_index);
+                    currently_selected_vals.push(p.attr('_val'));
+                    select_box.val(currently_selected_vals);
 
                 }
 
                 tag_manager_input.focus();
 
-                res.empty().hide();
+                res.empty().hide(1, function(){
+                    if(!!onItemSelection)
+                    {
+                        onItemSelectionArgs.push(p.attr('_val'));
+                        onItemSelectionArgs.push(currently_selected_vals);
+                        onItemSelection.apply(this, onItemSelectionArgs);
+                    }
+                });
+
             });
 
             p.mouseenter(function() {
@@ -362,8 +383,10 @@ function select2tag_init(select_box, params) {
             /* adding item in ul */
             var itemFound = false;
             var input_val = tag_manager.next().find('.autocomplete-lite-item-selected').text();
-            var data = tag_manager.next().find('.autocomplete-lite-item-selected').attr('data');
+            var selected_autocomplete_item = tag_manager.next().find('.autocomplete-lite-item-selected');
+            var data = selected_autocomplete_item.attr('data');
             var li_count = res.prev().find('li').length;
+            var onItemSelectionArgs = [];
 
             if(input_val === '' || input_val === undefined)
                 return;
@@ -389,7 +412,7 @@ function select2tag_init(select_box, params) {
 
             if ( !itemFound )
             {
-                var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "'><a>" + data + "</a></li>");
+                var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "' myval='" + selected_autocomplete_item.attr('_val') + "'><a>" + data + "</a></li>");
 
                 tag_manager_input.parent().before(tab);
                 var del_button = $("<span class='delete-button tags-del'></span>");
@@ -397,15 +420,22 @@ function select2tag_init(select_box, params) {
                     remove_item($(this));
                 });
                 tab.append(del_button);
-                selected_value = select_data_2d[input_val];
 
-                //$('#' + input.attr('id')).prop('selectedIndex', item_index);
+                currently_selected_vals.push(selected_autocomplete_item.attr('_val'));
+                select_box.val(currently_selected_vals);
 
             }
 
             tag_manager_input.val('').css('width', '15px').focus();
 
-            res.empty().hide();
+            res.empty().hide(1, function(){
+                if(!!onItemSelection)
+                {
+                    onItemSelectionArgs.push(selected_autocomplete_item.attr('_val'));
+                    onItemSelectionArgs.push(currently_selected_vals);
+                    onItemSelection.apply(this, onItemSelectionArgs);
+                }
+            });
 
         }
         else if(e.keyCode == 9) /* tab key */
@@ -430,12 +460,21 @@ function select2tag_init(select_box, params) {
     });
 
     var remove_item = function(item) {
-        $(item).parents('.mridlistitem').remove();
+        var val_to_remove = item.parents('.mridlistitem').attr('myval');
+        currently_selected_vals.pop(val_to_remove);
+        select_box.val(currently_selected_vals);
+        $(item).parents('.mridlistitem').hide(1, function(){
+            if(!!onItemRemoval)
+            {
+                onItemRemoval.apply(this, [val_to_remove, currently_selected_vals]);
+            }
+            $(this).remove();
+        });
         tag_manager_input.focus();
     }
 
 
-    if (/*@cc_on!@*/false) { // check for Internet Explorer
+    if (/*@cc_on!@*/false) { /* check for Internet Explorer */
         document.onfocusout = function(){
             hide_autocomplete();
         }
