@@ -62,6 +62,9 @@ function make_tags_init(select_box, params) {
         $('html').prepend('<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />');
     }
 
+    /* taking selectbox height here since it will change when we add `multiple` attribute to it */
+    var select_box_height = select_box.height()+ 10 + 'px';
+
     select_box.attr('multiple', 'multiple');
 
     /* taking arguments */
@@ -121,7 +124,7 @@ function make_tags_init(select_box, params) {
     tag_manager.css({
             'width': select_box.css('width'),
             'border': '1px solid #dddddd',
-            'min-height': select_box.css('height'),
+            'min-height': select_box_height,
             'font-family': select_box.css('font-family'),
             'font-size' : select_box.css('font-size'),
             'z-index' : '888',
