@@ -1,6 +1,6 @@
 /*
     Author : mridul ahuja
-    Github : https://github.com/mridah/select2tag
+    Github : https://github.com/mridah/make_tags
 
     For documentation and examples, visit github
 
@@ -9,7 +9,7 @@
 (function($) {
 
 jQuery.fn.extend({
-    select2tag: function (params) {
+    makeTags: function (params) {
         var me = $(this);
 
         var defaults = {
@@ -32,7 +32,7 @@ jQuery.fn.extend({
         params = $.extend(defaults, params);
 
 
-        select2tag_init(me, params);
+        make_tags_init(me, params);
     },
     click_outside: function(callback) {
         var clicked = false;
@@ -52,13 +52,14 @@ jQuery.fn.extend({
     }
 });
 
-var mridautocomplete_timer = 0;
+var _m_a_c_timer = 0;
 
-function select2tag_init(select_box, params) {
+function make_tags_init(select_box, params) {
     var res = null;
     if(!$('#mridtagmanager_css').length )
     {
         $('body').prepend('<style id="mridtagmanager_css">.mridautocomplete-list::-webkit-scrollbar{width: 6px;}.mridautocomplete-list::-webkit-scrollbar-track{-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);border-radius:0;}.mridautocomplete-list::-webkit-scrollbar-thumb{border-radius: 2px;-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);} .mridlist{overflow:auto;list-style-type:none;margin:0;padding:0;float:left}.mridlistitem{position:relative;border-right:1px solid #aaa;margin-top:5px;margin-left:5px;background-color:#C8C8C8;-webkit-transition:all .5s ease;float:left;border-radius:2px;cursor:default;padding:2px;padding-right:15px;border:none;}.mridlistitem:last-child{border-right:none}.mridlistitem a{text-decoration:none;color:#000;padding:0 8px;}.mridlistitem .delete-button{position:absolute;top:25%;right:5px;cursor:pointer;display:inline;padding:0 2px;background-color:transparent;border:none;text-align:center;font-size:13px;color:#696969;opacity:0.6;}.mridlistitem .delete-button:after{content:\'✖\'}.mridlistitem .delete-button:hover{color:#A52A2A;font-weight:700;opacity:1;}.tag-div{background:#ffffff;float:left;overflow-y:wrap;cursor:text;padding-right:5px;}.tag-manager-container{position:absolute;} .tag-manager-container .noselect{-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;} .tag-manager-input:focus{outline-width:0;outline:none;} .tag-manager-container .disabled{opacity:0.4;cursor:not-allowed;pointer-events:none;} </style>');
+        $('html').prepend('<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />');
     }
 
     select_box.attr('multiple', 'multiple');
@@ -90,7 +91,7 @@ function select2tag_init(select_box, params) {
     });
     select_box.val(currently_selected_vals);
 
-    var dataList = select_data_1d;   
+    var data_list = select_data_1d;
 
     var container = $('<div class="tag-manager-container"></div>');
     container.css({
@@ -128,9 +129,9 @@ function select2tag_init(select_box, params) {
             'top' : '0px'
     });
 
-    container.append(tag_manager);    
+    container.append(tag_manager);
 
-    var tag_manager_taglist = tag_manager.find('ul');
+    var tag_manager_tag_list = tag_manager.find('ul');
 
     var tag_manager_input = tag_manager.find('input');
 
@@ -175,8 +176,8 @@ function select2tag_init(select_box, params) {
         }
     };
 
-    var matchitem_data = function(input, item_dataList) {
-        var result = item_dataList.map(function(item, index) {
+    var matchitem_data = function(input, item_data_list) {
+        var result = item_data_list.map(function(item, index) {
             if (is_substring_exact(input, item)) {
                 return [item, index];
             }
@@ -185,21 +186,20 @@ function select2tag_init(select_box, params) {
         return result.filter(isNaN);
     };
 
-   var changeInput = function(input, dataList) {
+   var on_input_change = function(input, data_list) {
         var val = input.val();
         res = tag_manager.next();
 
         res.empty().hide();
 
-        tag_manager_taglist_items = tag_manager_taglist.find('li');
+        tag_manager_tag_list_items = tag_manager_tag_list.find('li');
 
-
-        var autoCompleteResult = matchitem_data(val, dataList);
-        if (val == "" || autoCompleteResult.length == 0) {
+        var a_c_result = matchitem_data(val, data_list);
+        if (!val || !a_c_result.length) {
             return;
         }
 
-        autoCompleteResult.forEach(function(e) {
+        a_c_result.forEach(function(e) {
             var p = $('<div />');
             p.css({
               'margin': '0px',
@@ -227,7 +227,7 @@ function select2tag_init(select_box, params) {
             p.click(function() {
 
                 /* adding item in ul */
-                var itemFound = false;
+                var item_found = false;
                 var input_val = p.text().toLowerCase();
                 var li_count = res.prev().find('li').length;
                 var onItemSelectionArgs = [];
@@ -244,13 +244,13 @@ function select2tag_init(select_box, params) {
 
                 for(i=0; i<li_count-1; i++)
                 {
-                    if ( tag_manager_taglist_items.eq(i).text().toLowerCase() === input_val)
+                    if ( tag_manager_tag_list_items.eq(i).text().toLowerCase() === input_val)
                     {
-                        itemFound = true;
-                    }                     
+                        item_found = true;
+                    }
                 }
 
-                if ( !itemFound )
+                if ( !item_found )
                 {
                     var value = p.attr('data');
                     var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "' myval='" + p.attr('_val') + "'><a>" + p.attr('data') + "</a></li>");
@@ -270,7 +270,7 @@ function select2tag_init(select_box, params) {
                 tag_manager_input.focus();
 
                 res.empty().hide(1, function(){
-                    if(!!onItemSelection)
+                    if(!!onItemSelection && !item_found)
                     {
                         onItemSelectionArgs.push(p.attr('_val'));
                         onItemSelectionArgs.push(currently_selected_vals);
@@ -320,11 +320,11 @@ function select2tag_init(select_box, params) {
 
     tag_manager_input.keyup(function(e) {
         /* if key pressed is not enter or arrow keys */
-        if(e.keyCode != 37 && e.keyCode != 38 && e.keyCode != 39 && e.keyCode != 40 && e.keyCode != 13 && e.keyCode != 9)
+        if(e.keyCode != 37 && e.keyCode != 38 && e.keyCode != 39 && e.keyCode != 40 && e.keyCode != 13 && e.keyCode != 9 && e.keyCode != 8)
         {
-            clearTimeout(mridautocomplete_timer);
-            mridautocomplete_timer = setTimeout(function() {
-               changeInput(tag_manager_input, dataList);
+            clearTimeout(_m_a_c_timer);
+            _m_a_c_timer = setTimeout(function() {
+               on_input_change(tag_manager_input, data_list);
             }, 100);
         }
 
@@ -381,7 +381,7 @@ function select2tag_init(select_box, params) {
         else if(e.keyCode == 13) /* enter key */
         {
             /* adding item in ul */
-            var itemFound = false;
+            var item_found = false;
             var input_val = tag_manager.next().find('.autocomplete-lite-item-selected').text();
             var selected_autocomplete_item = tag_manager.next().find('.autocomplete-lite-item-selected');
             var data = selected_autocomplete_item.attr('data');
@@ -404,13 +404,13 @@ function select2tag_init(select_box, params) {
 
             for(i=0; i<li_count-1; i++)
             {
-                if ( tag_manager_taglist_items.eq(i).text().toLowerCase() === input_val)
+                if ( tag_manager_tag_list_items.eq(i).text().toLowerCase() === input_val)
                 {
-                    itemFound = true;
-                }                     
+                    item_found = true;
+                }
             }
 
-            if ( !itemFound )
+            if ( !item_found )
             {
                 var tab =$("<li class='mridlistitem noselect " + tagManagerItemsClass + "' myval='" + selected_autocomplete_item.attr('_val') + "'><a>" + data + "</a></li>");
 
@@ -429,7 +429,7 @@ function select2tag_init(select_box, params) {
             tag_manager_input.val('').css('width', '15px').focus();
 
             res.empty().hide(1, function(){
-                if(!!onItemSelection)
+                if(!!onItemSelection && !item_found)
                 {
                     onItemSelectionArgs.push(selected_autocomplete_item.attr('_val'));
                     onItemSelectionArgs.push(currently_selected_vals);
@@ -442,9 +442,28 @@ function select2tag_init(select_box, params) {
         {
             hide_autocomplete();
         }
-        else
+        else if(e.keyCode == 8) /* backspace key */
         {
-            clearTimeout(mridautocomplete_timer);
+            var prev_item = tag_manager_input.parent().prev();
+            if(!tag_manager_input.val() && prev_item.hasClass('mridlistitem'))
+            {
+                var prev_item_text = prev_item.find('a').text();
+
+                currently_selected_vals.pop(prev_item.attr('myval'));
+                select_box.val(currently_selected_vals);
+                prev_item.remove();
+                tag_manager_input.val(prev_item_text.toLowerCase());
+
+                on_input_change(tag_manager_input, data_list);
+            }
+            else
+            {
+                on_input_change(tag_manager_input, data_list);
+            }
+        }
+        else /* any other key */
+        {
+            on_input_change(tag_manager_input, data_list);
         }
     });
 
