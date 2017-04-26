@@ -451,17 +451,28 @@ function make_tags_init(select_box, params) {
             if(!tag_manager_input.val() && prev_item.hasClass('mridlistitem'))
             {
                 var prev_item_text = prev_item.find('a').text();
+                prev_item_text = prev_item_text.toLowerCase();
 
                 currently_selected_vals.pop(prev_item.attr('myval'));
                 select_box.val(currently_selected_vals);
                 prev_item.remove();
-                tag_manager_input.val(prev_item_text.toLowerCase());
+                tag_manager_input.val(prev_item_text);
 
                 on_input_change(tag_manager_input, data_list);
+
+                resize_input_box.call(tag_manager_input, prev_item_text);
+
+                return false;
             }
             else
             {
+                var val = tag_manager_input.val();
+                val = val.substring(0, val.length - 1);
+                tag_manager_input.val(val);
+                resize_input_box.call(tag_manager_input, val);
                 on_input_change(tag_manager_input, data_list);
+
+                return false;
             }
         }
         else /* any other key */
